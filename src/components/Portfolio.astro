@@ -1,0 +1,32 @@
+---
+import { getEntry, render } from "astro:content";
+
+interface Props {
+  lang: string;
+  class?: string;
+}
+
+const { lang } = Astro.props;
+const entry = await getEntry("portfolio", lang);
+if (!entry) return;
+const { Content } = await render(entry);
+---
+
+<section
+  class="portfolio-content prose prose-xl mt-6 max-w-2xl prose-headings:text-muted prose-p:text-muted prose-li:text-muted prose-strong:text-muted prose-code:text-muted prose-td:text-muted prose-th:text-muted prose-a:text-muted prose-blockquote:text-muted"
+>
+  <Content />
+</section>
+
+<style>
+  .portfolio-content {
+    --tw-prose-bullets: var(--color-muted);
+    --tw-prose-counters: var(--color-muted);
+    --tw-prose-hr: var(--color-muted);
+    --tw-prose-quote-borders: var(--color-muted);
+  }
+
+  .portfolio-content :global(hr) {
+    border-color: var(--color-muted);
+  }
+</style>

@@ -1,0 +1,48 @@
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+  import { ScrollSmoother } from "gsap/ScrollSmoother";
+
+  gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+
+  let smoother: ScrollSmoother | undefined;
+
+  function init() {
+    smoother?.kill();
+    ScrollTrigger.getAll().forEach((t) => t.kill());
+
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    smoother = ScrollSmoother.create({
+      wrapper: "#smooth-wrapper",
+      content: "#smooth-content",
+      smooth: prefersReduced ? 0 : 1.5,
+    });
+
+    if (!prefersReduced) {
+      const SELECTOR =
+        ".portfolio-content p, .portfolio-content h2, .portfolio-content h3, " +
+        ".portfolio-content h4, .portfolio-content h5, .portfolio-content h6, " +
+        ".portfolio-content ul, .portfolio-content ol, .portfolio-content pre, " +
+        ".portfolio-content blockquote";
+
+      gsap.set(SELECTOR, { opacity: 0, y: 28 });
+
+      ScrollTrigger.batch(SELECTOR, {
+        start: "top 90%",
+        onEnter: (batch) =>
+          gsap.to(batch, {
+            opacity: 1,
+            y: 0,
+            duration: 0.7,
+            ease: "power2.out",
+            stagger: 0.06,
+          }),
+      });
+    }
+  }
+
+  document.addEventListener("astro:page-load", init);
+</script>

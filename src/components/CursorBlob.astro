@@ -1,0 +1,242 @@
+<canvas id="cursor-blob-canvas" aria-hidden="true"></canvas>
+
+<style>
+  #cursor-blob-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.35s;
+  }
+
+  @media (pointer: coarse), (prefers-reduced-motion: reduce) {
+    #cursor-blob-canvas {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  const TRAIL_LENGTH = 12;
+
+  const canvas = document.getElementById(
+    "cursor-blob-canvas",
+  ) as HTMLCanvasElement;
+
+  const vertexShader = /* glsl */ `
+    attribute vec3 position;
+    void main() {
+      gl_Position = vec4(position, 1.0);
+    }
+  `;
+
+  const fragmentShader = /* glsl */ `
+    precision mediump float;
+
+    const int TRAIL_LENGTH = 12;
+    const float EPS = 1e-4;
+    const int ITR = 8;
+
+    uniform vec2 uResolution;
+    uniform vec2 uPointerTrail[TRAIL_LENGTH];
+    uniform vec3 uColor;
+
+    vec3 origin = vec3(0.0, 0.0, 1.0);
+    vec3 cDir = vec3(0.0, 0.0, -1.0);
+    vec3 cSide = vec3(1.0, 0.0, 0.0);
+    vec3 cUp = vec3(0.0, 1.0, 0.0);
+
+    float smoothMin(float d1, float d2, float k) {
+      float h = exp(-k * d1) + exp(-k * d2);
+      return -log(h) / k;
+    }
+
+    float map(vec3 p) {
+      float baseRadius = 4e-3;
+      float radius = baseRadius * float(TRAIL_LENGTH);
+      float k = 25.0;
+      float d = 1e5;
+
+      for (int i = 0; i < TRAIL_LENGTH; i++) {
+        vec2 pt = uPointerTrail[i] * uResolution / min(uResolution.x, uResolution.y);
+        float sphere = length(p - vec3(pt, 0.0)) - (radius - baseRadius * float(i));
+        d = smoothMin(d, sphere, k);
+      }
+
+      return d;
+    }
+
+    void main() {
+      vec2 p = (gl_FragCoord.xy * 2.0 - uResolution) / min(uResolution.x, uResolution.y);
+      vec3 ray = origin + cSide * p.x + cUp * p.y;
+
+      float dist = 0.0;
+      for (int i = 0; i < ITR; ++i) {
+        dist = map(ray);
+        ray += cDir * dist;
+        if (dist < EPS) break;
+      }
+
+      gl_FragColor = dist < EPS
+        ? vec4(uColor, 1.0)
+        : vec4(0.0, 0.0, 0.0, 0.0);
+    }
+  `;
+
+  // Populated after lazy init
+  let renderer: any = null;
+  let scene: any = null;
+  let camera: any = null;
+  let uniforms: any = null;
+  let trail: any[] = [];
+  let cursor: any = null;
+
+  let visible = false;
+  let rafId = 0;
+  let leaveTimeout = 0;
+  let settleFrames = 0;
+  let initialized = false;
+  let cleanup: (() => void) | null = null;
+
+  function updateTrail() {
+    for (let i = TRAIL_LENGTH - 1; i > 0; i--) trail[i].copy(trail[i - 1]);
+    trail[0].copy(cursor);
+  }
+
+  function render() {
+    updateTrail();
+    renderer.render(scene, camera);
+    if (settleFrames > 0) {
+      settleFrames--;
+      rafId = requestAnimationFrame(render);
+    } else {
+      rafId = 0;
+    }
+  }
+
+  function onPointerLeave() {
+    visible = false;
+    canvas.style.opacity = "0";
+    leaveTimeout = window.setTimeout(() => {
+      settleFrames = 0;
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    }, 400);
+  }
+
+  function onPointerMove(e: PointerEvent) {
+    const x = (e.clientX / window.innerWidth) * 2 - 1;
+    const y = -(e.clientY / window.innerHeight) * 2 + 1;
+    cursor.set(x, y);
+    settleFrames = TRAIL_LENGTH + 4;
+
+    if (!visible) {
+      clearTimeout(leaveTimeout);
+      trail.forEach((v) => v.set(x, y));
+      canvas.style.opacity = "1";
+      visible = true;
+    }
+    if (!rafId) render();
+  }
+
+  async function init() {
+    if (initialized) return;
+    initialized = true;
+
+    const THREE = await import("three");
+
+    renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+    renderer.setClearColor(0x000000, 0);
+    renderer.setPixelRatio(1);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    scene = new THREE.Scene();
+    camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    trail = Array.from(
+      { length: TRAIL_LENGTH },
+      () => new THREE.Vector2(-10, -10),
+    );
+    cursor = new THREE.Vector2(-10, -10);
+
+    function getBlobColor() {
+      return document.documentElement.dataset.theme === "dark"
+        ? new THREE.Vector3(58 / 255, 55 / 255, 44 / 255)
+        : new THREE.Vector3(189 / 255, 185 / 255, 168 / 255);
+    }
+
+    uniforms = {
+      uResolution: {
+        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+      },
+      uPointerTrail: { value: trail },
+      uColor: { value: getBlobColor() },
+    };
+
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    const material = new THREE.RawShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms,
+      transparent: true,
+    });
+    scene.add(new THREE.Mesh(geometry, material));
+
+    const themeObserver = new MutationObserver(() => {
+      uniforms.uColor.value.copy(getBlobColor());
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    function onResize() {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+    }
+    window.addEventListener("resize", onResize);
+
+    cleanup = () => {
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerleave", onPointerLeave);
+      document.removeEventListener("pointercancel", onPointerLeave);
+      window.removeEventListener("resize", onResize);
+      themeObserver.disconnect();
+      geometry.dispose();
+      material.dispose();
+      renderer.dispose();
+    };
+  }
+
+  async function onFirstPointerMove(e: PointerEvent) {
+    await init();
+    onPointerMove(e);
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerleave", onPointerLeave);
+    document.addEventListener("pointercancel", onPointerLeave);
+  }
+
+  if (
+    !window.matchMedia("(pointer: coarse), (prefers-reduced-motion: reduce)")
+      .matches
+  ) {
+    document.addEventListener("pointermove", onFirstPointerMove, {
+      once: true,
+    });
+  }
+
+  document.addEventListener(
+    "astro:before-swap",
+    () => {
+      document.removeEventListener("pointermove", onFirstPointerMove);
+      clearTimeout(leaveTimeout);
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+      cleanup?.();
+    },
+    { once: true },
+  );
+</script>

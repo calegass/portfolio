@@ -1,0 +1,122 @@
+---
+interface Props {
+  name: string;
+}
+const { name } = Astro.props;
+---
+
+<h1
+  id="hero-name"
+  aria-label={name}
+  class="max-w-3xl font-serif font-semibold leading-none text-foreground text-5xl sm:text-7xl md:text-8xl"
+>
+  <span aria-hidden="true" data-hero-name>{name}</span>
+</h1>
+
+<style>
+  [data-hero-name] {
+    overflow: visible;
+    display: block;
+  }
+</style>
+
+<script>
+  import gsap from "gsap";
+  import { SplitText } from "gsap/SplitText";
+
+  const RADIUS = 150;
+  const STRENGTH = 14;
+
+  gsap.registerPlugin(SplitText);
+
+  let cleanup: (() => void) | null = null;
+
+  function init() {
+    cleanup?.();
+    cleanup = null;
+
+    const nameEl = document.querySelector<HTMLElement>("[data-hero-name]");
+    if (!nameEl) return;
+
+    const split = new SplitText(nameEl, { type: "chars" });
+    const chars = split.chars as HTMLElement[];
+
+    const setX = chars.map((ch) =>
+      gsap.quickTo(ch, "x", { duration: 0.4, ease: "power3.out" }),
+    );
+    const setY = chars.map((ch) =>
+      gsap.quickTo(ch, "y", { duration: 0.4, ease: "power3.out" }),
+    );
+
+    type Rect = { cx: number; cy: number };
+    let rects: Rect[] = [];
+
+    function cacheRects() {
+      rects = chars.map((ch) => {
+        const r = ch.getBoundingClientRect();
+        return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+      });
+    }
+
+    requestAnimationFrame(cacheRects);
+    const ro = new ResizeObserver(cacheRects);
+    ro.observe(nameEl);
+
+    let scrollTimeout = 0;
+    function onScroll() {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = window.setTimeout(cacheRects, 1700);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    const cursor = { x: -500, y: -500 };
+
+    function onPointerMove(e: PointerEvent) {
+      cursor.x = e.clientX;
+      cursor.y = e.clientY;
+
+      chars.forEach((_, i) => {
+        const { cx, cy } = rects[i] ?? { cx: 0, cy: 0 };
+        const dx = cursor.x - cx;
+        const dy = cursor.y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < RADIUS && dist > 0) {
+          const force = STRENGTH * (1 - dist / RADIUS);
+          const angle = Math.atan2(dy, dx);
+          setX[i](-Math.cos(angle) * force);
+          setY[i](-Math.sin(angle) * force);
+        } else {
+          setX[i](0);
+          setY[i](0);
+        }
+      });
+    }
+
+    function onPointerLeave() {
+      gsap.to(chars, {
+        x: 0,
+        y: 0,
+        duration: 1.2,
+        ease: "elastic.out(1, 0.4)",
+        stagger: 0.02,
+      });
+    }
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerleave", onPointerLeave);
+    document.addEventListener("pointercancel", onPointerLeave);
+
+    cleanup = () => {
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerleave", onPointerLeave);
+      document.removeEventListener("pointercancel", onPointerLeave);
+      window.removeEventListener("scroll", onScroll);
+      ro.disconnect();
+      split.revert();
+    };
+  }
+
+  document.addEventListener("astro:page-load", init);
+  document.addEventListener("astro:before-swap", () => cleanup?.());
+</script>

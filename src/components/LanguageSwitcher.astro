@@ -1,0 +1,36 @@
+---
+import { languages, type Lang } from "../i18n/ui";
+import {
+  getLangFromUrl,
+  getLocalizedPath,
+  getPathWithoutLang,
+  useTranslations,
+} from "../i18n/utils";
+
+const currentLang = getLangFromUrl(Astro.url);
+const currentPath = getPathWithoutLang(Astro.url);
+const t = useTranslations(currentLang);
+---
+
+<nav aria-label={t("language.label")} class="flex gap-3 text-muted text-sm">
+  {
+    Object.entries(languages).map(([lang, label]) => {
+      const targetLang = lang as Lang;
+      const isCurrent = targetLang === currentLang;
+
+      return (
+        <a
+          href={getLocalizedPath(targetLang, currentPath)}
+          lang={targetLang}
+          aria-current={isCurrent ? "page" : undefined}
+          class:list={[
+            "transition-colors hover:text-foreground",
+            isCurrent && "font-semibold text-foreground",
+          ]}
+        >
+          {label}
+        </a>
+      );
+    })
+  }
+</nav>

@@ -1,0 +1,58 @@
+@import url("https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap");
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-serif: "Crimson Text", Georgia, serif;
+
+  --color-parchment-50: oklch(96.41% 0.004 91.45);
+  --color-parchment-100: oklch(93.01% 0.008 98.88);
+  --color-parchment-200: oklch(85.69% 0.015 94.22);
+  --color-parchment-300: oklch(78.43% 0.024 96.03);
+  --color-parchment-400: oklch(71.01% 0.033 97.01);
+  --color-parchment-500: oklch(63.19% 0.041 95.65);
+  --color-parchment-600: oklch(53.97% 0.035 97.17);
+  --color-parchment-700: oklch(44.1% 0.027 96.31);
+  --color-parchment-800: oklch(33.63% 0.019 94.54);
+  --color-parchment-900: oklch(22.54% 0.011 99.42);
+  --color-parchment-950: oklch(18.64% 0.008 95.48);
+
+  --color-background: var(--site-background);
+  --color-surface: var(--site-surface);
+  --color-foreground: var(--site-foreground);
+  --color-muted: var(--site-muted);
+  --color-border: var(--site-border);
+}
+
+@layer base {
+  :root,
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --site-background: var(--color-parchment-50);
+    --site-surface: var(--color-parchment-100);
+    --site-foreground: var(--color-parchment-950);
+    --site-muted: var(--color-parchment-700);
+    --site-border: var(--color-parchment-200);
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --site-background: var(--color-parchment-950);
+    --site-surface: var(--color-parchment-900);
+    --site-foreground: var(--color-parchment-50);
+    --site-muted: var(--color-parchment-300);
+    --site-border: var(--color-parchment-800);
+  }
+
+  html {
+    background: var(--site-background);
+    color: var(--site-foreground);
+    font-family: var(--font-serif);
+  }
+
+  body {
+    min-height: 100vh;
+    margin: 0;
+    background: var(--site-background);
+  }
+}
