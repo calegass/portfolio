@@ -1,12 +1,14 @@
 ---
 import type { GetStaticPaths } from "astro";
+import { getEntry } from "astro:content";
 import HeroName from "../components/HeroName.astro";
+import ResumeLink from "../components/ResumeLink.astro";
 import LanguageSwitcher from "../components/LanguageSwitcher.astro";
 import Portfolio from "../components/Portfolio.astro";
 import ScrollAnimations from "../components/ScrollAnimations.astro";
 import ThemeToggle from "../components/ThemeToggle.astro";
 import { defaultLang, languages, showDefaultLang, type Lang } from "../i18n/ui";
-import { getLocalizedPath, useTranslations } from "../i18n/utils";
+import { useTranslations } from "../i18n/utils";
 import Layout from "../layouts/Layout.astro";
 
 export const getStaticPaths = (() => {
@@ -22,6 +24,12 @@ export const getStaticPaths = (() => {
 
 const { lang } = Astro.props as { lang: Lang };
 const t = useTranslations(lang);
+
+const portfolioEntry = await getEntry("portfolio", lang);
+if (!portfolioEntry) {
+  throw new Error(`Missing portfolio content for language "${lang}"`);
+}
+const resumeHref = portfolioEntry.data.resume;
 ---
 
 <Layout title={t("site.title")} description={t("site.description")}>
@@ -31,13 +39,12 @@ const t = useTranslations(lang);
     <header
       class="flex items-center justify-between border-border border-b pb-6"
     >
-      <a
-        href={getLocalizedPath(lang)}
-        class="text-foreground text-lg font-semibold"
-      >
-        {t("hero.title")}
-      </a>
-      <div class="flex items-center gap-4">
+      <ResumeLink
+        label={t("curriculum.download")}
+        href={resumeHref}
+        hint={t("curriculum.hint")}
+      />
+      <div class="flex items-center gap-10">
         <LanguageSwitcher />
         <ThemeToggle />
       </div>
@@ -45,6 +52,9 @@ const t = useTranslations(lang);
 
     <div class="pt-24 pb-12">
       <HeroName name={t("hero.title")} />
+      <p class="text-muted mt-6 max-w-2xl font-serif text-xl sm:text-2xl">
+        {t("site.description")}
+      </p>
     </div>
 
     <Portfolio lang={lang} />

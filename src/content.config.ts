@@ -6,6 +6,7 @@ const portfolio = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/portfolio" }),
   schema: z.object({
     title: z.string(),
+    resume: z.string(),
   }),
 });
 

@@ -29,4 +29,23 @@ const { Content } = await render(entry);
   .portfolio-content :global(hr) {
     border-color: var(--color-muted);
   }
+
+  .portfolio-content :global(code) {
+    background-color: transparent;
+    color: var(--site-foreground);
+    border: 1px solid var(--site-border);
+    padding: 0.15em 0.35em;
+    border-radius: 0.375rem;
+    font-size: 0.85em;
+    font-family:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+      "Courier New", monospace;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .portfolio-content :global(code::before),
+  .portfolio-content :global(code::after) {
+    content: "" !important;
+  }
 </style>

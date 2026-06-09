@@ -1,0 +1,59 @@
+---
+import { INSPIRATIONS, SOCIAL_LINKS, TECH_STACK } from "../consts";
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const year = new Date().getFullYear();
+---
+
+<footer
+  class="text-muted border-border mx-auto w-full max-w-4xl border-t px-6 py-8 text-sm sm:px-10"
+>
+  <div
+    class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <div
+      class="text-muted/80 flex min-w-0 flex-col gap-1 text-xs wrap-anywhere"
+    >
+      <p>{t("footer.builtWith")} {TECH_STACK.join(", ")}.</p>
+      <p>
+        {t("footer.inspiration")}{" "}
+        {
+          INSPIRATIONS.map((credit, i) => (
+            <Fragment>
+              {i > 0 ? ", " : ""}
+              <a
+                href={credit.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:text-foreground underline underline-offset-2 transition-colors duration-200"
+              >
+                {credit.label}
+              </a>
+            </Fragment>
+          ))
+        }.
+      </p>
+      <p>&copy; {year} Matheus Calegari. {t("footer.rights")}</p>
+    </div>
+
+    <div class="flex shrink-0 gap-x-6 font-semibold">
+      {
+        SOCIAL_LINKS.map((link) => {
+          const external = link.href.startsWith("http");
+          return (
+            <a
+              href={link.href}
+              class="hover:text-foreground transition-colors duration-200"
+              target={external ? "_blank" : undefined}
+              rel={external ? "noopener noreferrer" : undefined}
+            >
+              {link.label}
+            </a>
+          );
+        })
+      }
+    </div>
+  </div>
+</footer>

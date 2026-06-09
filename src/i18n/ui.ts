@@ -10,16 +10,19 @@ export const showDefaultLang = false;
 
 const en = {
   "site.title": "Matheus Calegari",
-  "site.description": "A minimalist personal portfolio.",
-  "nav.home": "Home",
-  "nav.curriculum": "Curriculum",
+  "site.description":
+    "Software engineer crafting clean, considered web experiences.",
   "language.label": "Language",
   "theme.toggle": "Toggle theme",
-  "hero.eyebrow": "Portfolio",
   "hero.title": "Matheus Calegari",
-  "hero.description":
-    "A short placeholder introduction for the portfolio. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec molestie vel enim ut lobortis. Nam euismod, ante quis hendrerit iaculis, lectus sem accumsan erat, mollis consectetur odio risus ut arcu. Proin convallis tincidunt quam. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur dolor felis, efficitur in posuere quis, accumsan vitae dui. Sed at consequat elit. Pellentesque ut dui vitae nisl ullamcorper luctus \n eget ut mi. Pellentesque vitae purus lacus. Suspendisse consequat ex ac nulla pretium, a fringilla mauris euismod. Nam sit amet enim est. \n Morbi ac augue et eros consectetur tincidunt. Nunc molestie euismod congue. Maecenas mollis justo vitae viverra euismod. Mauris congue lorem et euismod pretium. Vivamus porttitor metus ac quam commodo luctus id id mi. Phasellus tortor libero, blandit non massa in, varius sagittis lacus. Integer iaculis fringilla ipsum, in vestibulum nulla commodo eu. Morbi tincidunt, dolor sit amet laoreet cursus, ex lorem egestas quam, vestibulum commodo lectus libero id nulla. Sed vitae maximus arcu. Aenean bibendum \n convallis neque sit amet sodales. Nulla efficitur et risus nec suscipit. Mauris eget ultricies odio, nec suscipit justo. Ut venenatis nibh luctus nisi faucibus aliquet. Mauris consequat nisl ipsum, eget eleifend nibh tempus eget.\n",
-  "curriculum.download": "Download curriculum",
+  "curriculum.download": "Open curriculum",
+  "curriculum.hint": "Opens in current language",
+  "footer.builtWith": "Built with",
+  "footer.inspiration": "Inspired by",
+  "footer.rights": "All rights reserved.",
+  "notFound.title": "Page not found",
+  "notFound.message": "The page you're looking for doesn't exist or has moved.",
+  "notFound.back": "Back home",
 } as const;
 
 type UiKey = keyof typeof en;
@@ -28,15 +31,19 @@ export const ui = {
   en,
   pt: {
     "site.title": "Matheus Calegari",
-    "site.description": "Um portfólio pessoal minimalista.",
-    "nav.home": "Início",
-    "nav.curriculum": "Currículo",
+    "site.description":
+      "Engenheiro de software criando experiências web limpas e bem pensadas.",
     "language.label": "Idioma",
     "theme.toggle": "Alternar tema",
-    "hero.eyebrow": "Portfólio",
     "hero.title": "Matheus Calegari",
-    "hero.description": "Uma breve introdução provisória para o portfólio.",
-    "curriculum.download": "Baixar currículo",
+    "curriculum.download": "Abrir currículo",
+    "curriculum.hint": "Abre no idioma atual",
+    "footer.builtWith": "Feito com",
+    "footer.inspiration": "Inspirado em",
+    "footer.rights": "Todos os direitos reservados.",
+    "notFound.title": "Página não encontrada",
+    "notFound.message": "A página que você procura não existe ou foi movida.",
+    "notFound.back": "Voltar ao início",
   },
 } satisfies Record<Lang, Record<UiKey, string>>;
 

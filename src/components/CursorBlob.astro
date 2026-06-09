@@ -21,8 +21,26 @@
 
 <script>
   const TRAIL_LENGTH = 12;
+  const MAX_RENDER_LONG = 1920;
+  const MAX_RENDER_SHORT = 1080;
 
-  const canvas = document.getElementById(
+  function getRenderSize() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const longSide = Math.max(width, height);
+    const shortSide = Math.min(width, height);
+    const scale = Math.min(
+      1,
+      MAX_RENDER_LONG / longSide,
+      MAX_RENDER_SHORT / shortSide,
+    );
+    return {
+      width: Math.round(width * scale),
+      height: Math.round(height * scale),
+    };
+  }
+
+  let canvas = document.getElementById(
     "cursor-blob-canvas",
   ) as HTMLCanvasElement;
 
@@ -148,10 +166,11 @@
 
     const THREE = await import("three");
 
+    const { width, height } = getRenderSize();
     renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
     renderer.setClearColor(0x000000, 0);
     renderer.setPixelRatio(1);
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(width, height, false);
 
     scene = new THREE.Scene();
     camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -170,7 +189,7 @@
 
     uniforms = {
       uResolution: {
-        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+        value: new THREE.Vector2(width, height),
       },
       uPointerTrail: { value: trail },
       uColor: { value: getBlobColor() },
@@ -185,8 +204,13 @@
     });
     scene.add(new THREE.Mesh(geometry, material));
 
+    function renderCurrentFrame() {
+      renderer.render(scene, camera);
+    }
+
     const themeObserver = new MutationObserver(() => {
       uniforms.uColor.value.copy(getBlobColor());
+      renderCurrentFrame();
     });
     themeObserver.observe(document.documentElement, {
       attributes: true,
@@ -194,8 +218,9 @@
     });
 
     function onResize() {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+      const { width, height } = getRenderSize();
+      renderer.setSize(width, height, false);
+      uniforms.uResolution.value.set(width, height);
     }
     window.addEventListener("resize", onResize);
 
@@ -219,24 +244,33 @@
     document.addEventListener("pointercancel", onPointerLeave);
   }
 
-  if (
-    !window.matchMedia("(pointer: coarse), (prefers-reduced-motion: reduce)")
-      .matches
-  ) {
-    document.addEventListener("pointermove", onFirstPointerMove, {
-      once: true,
-    });
+  function teardown() {
+    document.removeEventListener("pointermove", onFirstPointerMove);
+    clearTimeout(leaveTimeout);
+    cancelAnimationFrame(rafId);
+    rafId = 0;
+    initialized = false;
+    cleanup?.();
+    cleanup = null;
+    visible = false;
   }
 
-  document.addEventListener(
-    "astro:before-swap",
-    () => {
-      document.removeEventListener("pointermove", onFirstPointerMove);
-      clearTimeout(leaveTimeout);
-      cancelAnimationFrame(rafId);
-      rafId = 0;
-      cleanup?.();
-    },
-    { once: true },
-  );
+  function registerPointerListener() {
+    if (
+      !window.matchMedia("(pointer: coarse), (prefers-reduced-motion: reduce)")
+        .matches
+    ) {
+      document.addEventListener("pointermove", onFirstPointerMove, {
+        once: true,
+      });
+    }
+  }
+
+  registerPointerListener();
+
+  document.addEventListener("astro:before-swap", teardown);
+  document.addEventListener("astro:after-swap", () => {
+    canvas = document.getElementById("cursor-blob-canvas") as HTMLCanvasElement;
+    registerPointerListener();
+  });
 </script>

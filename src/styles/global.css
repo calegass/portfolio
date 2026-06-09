@@ -24,6 +24,36 @@
   --color-border: var(--site-border);
 }
 
+@property --site-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(96.41% 0.004 91.45);
+}
+
+@property --site-surface {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(85.69% 0.015 94.22);
+}
+
+@property --site-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(18.64% 0.008 95.48);
+}
+
+@property --site-muted {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(44.1% 0.027 96.31);
+}
+
+@property --site-border {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(85.69% 0.015 94.22);
+}
+
 @layer base {
   :root,
   :root[data-theme="light"] {
@@ -54,5 +84,16 @@
     min-height: 100vh;
     margin: 0;
     background: var(--site-background);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :root.theme-transitioning {
+      transition:
+        --site-background 350ms ease,
+        --site-surface 350ms ease,
+        --site-foreground 350ms ease,
+        --site-muted 350ms ease,
+        --site-border 350ms ease;
+    }
   }
 }

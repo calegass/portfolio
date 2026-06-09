@@ -1,0 +1,234 @@
+---
+interface Props {
+  label: string;
+  href: string;
+  hint: string;
+}
+const { label, href: resumeHref, hint } = Astro.props;
+---
+
+<div class="group relative inline-flex items-center">
+  <div class="text-muted inline-flex text-xl" data-resume-magnetic>
+    <a
+      href={resumeHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="hover:text-foreground relative inline-grid cursor-pointer place-items-center font-serif font-semibold no-underline transition-colors duration-200"
+      data-resume-link
+    >
+      <span data-resume-text>{label}</span>
+      <div class="emitter" data-resume-emitter aria-hidden="true"></div>
+    </a>
+  </div>
+  <span
+    class="text-muted pointer-events-none absolute left-full ml-8 max-sm:hidden -translate-x-0.75 whitespace-nowrap font-serif text-sm italic opacity-0 transition-[opacity,transform] duration-300 ease-out group-hover:translate-x-0 group-hover:opacity-70 group-focus-within:translate-x-0 group-focus-within:opacity-70 motion-reduce:transition-none"
+    >{hint}</span
+  >
+</div>
+
+<style>
+  .emitter {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+    bottom: 50%;
+    left: 30%;
+  }
+</style>
+
+<script>
+  import gsap from "gsap";
+  import { Physics2DPlugin } from "gsap/Physics2DPlugin";
+
+  gsap.registerPlugin(Physics2DPlugin);
+
+  const COLORS = ["#FFFF04", "#EA4C89", "#892AB8", "#4AF2FD"];
+  const MAGNETIC_RADIUS = 55;
+  const MAGNETIC_PULL = 0.75;
+  const CONFETTI_DELAY_MS = 1000;
+
+  let cleanup: (() => void) | null = null;
+
+  function fireParticles(parent: HTMLElement) {
+    const quantity = 60;
+
+    for (let i = quantity - 1; i >= 0; i--) {
+      const angle = gsap.utils.random(-135, -45);
+      const velocity = gsap.utils.random(70, 140);
+      const dot = document.createElement("div");
+
+      dot.style.setProperty("--b", COLORS[Math.floor(gsap.utils.random(0, 4))]);
+      dot.style.cssText += `
+        position: absolute;
+        width: 6px; height: 6px;
+        border-radius: 2px;
+        background: var(--b);
+        pointer-events: none;
+      `;
+      parent.appendChild(dot);
+
+      gsap.set(dot, {
+        opacity: 0,
+        x: -4,
+        y: 6,
+        scale: gsap.utils.random(0.4, 0.7),
+      });
+
+      gsap
+        .timeline({
+          onComplete() {
+            dot.remove();
+          },
+        })
+        .to(dot, { duration: 0.05, opacity: 1 }, 0)
+        .to(
+          dot,
+          {
+            duration: 1.8,
+            rotationX: `-=${gsap.utils.random(720, 1440)}`,
+            rotationZ: `+=${gsap.utils.random(720, 1440)}`,
+            physics2D: { angle, velocity, gravity: 120 },
+          },
+          0,
+        )
+        .to(dot, { duration: 1, opacity: 0 }, 0.8);
+    }
+  }
+
+  function init() {
+    cleanup?.();
+    cleanup = null;
+
+    const magnetic = document.querySelector<HTMLElement>(
+      "[data-resume-magnetic]",
+    );
+    const link = document.querySelector<HTMLElement>("[data-resume-link]");
+    const resumeText =
+      document.querySelector<HTMLElement>("[data-resume-text]");
+    const emitter = document.querySelector<HTMLElement>(
+      "[data-resume-emitter]",
+    );
+
+    if (!magnetic || !link || !resumeText || !emitter) return;
+
+    const magneticEl = magnetic;
+    const linkEl = link;
+    const resumeTextEl = resumeText;
+    const emitterEl = emitter;
+    const setMagneticX = gsap.quickTo(magneticEl, "x", {
+      duration: 0.4,
+      ease: "power2.out",
+    });
+    const setMagneticY = gsap.quickTo(magneticEl, "y", {
+      duration: 0.4,
+      ease: "power2.out",
+    });
+
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (prefersReduced) return;
+
+    let centerX = 0;
+    let centerY = 0;
+    function cacheCenter() {
+      const rect = magneticEl.getBoundingClientRect();
+      const tx = gsap.getProperty(magneticEl, "x") as number;
+      const ty = gsap.getProperty(magneticEl, "y") as number;
+      centerX = rect.left + rect.width / 2 - tx;
+      centerY = rect.top + rect.height / 2 - ty;
+    }
+
+    requestAnimationFrame(cacheCenter);
+    const ro = new ResizeObserver(cacheCenter);
+    ro.observe(magneticEl);
+
+    let scrollTimeout = 0;
+    function onScroll() {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = window.setTimeout(cacheCenter, 1700);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    let hasClicked = false;
+    let isPulled = false;
+    const shakeTimers: number[] = [];
+
+    function runShake() {
+      if (hasClicked) return;
+
+      gsap.to(linkEl, {
+        x: 5,
+        rotation: 0.8,
+        duration: 0.075,
+        yoyo: true,
+        repeat: 7,
+        ease: "power2.inOut",
+        onComplete: () => gsap.to(linkEl, { x: 0, rotation: 0, duration: 0.3 }),
+      });
+    }
+
+    shakeTimers.push(window.setTimeout(runShake, 7000));
+    shakeTimers.push(window.setTimeout(runShake, 10000));
+
+    function resetMagnetic() {
+      setMagneticX(0);
+      setMagneticY(0);
+    }
+
+    function onMouseMove(e: PointerEvent) {
+      const dx = e.clientX - centerX;
+      const dy = e.clientY - centerY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < MAGNETIC_RADIUS) {
+        const pull = (MAGNETIC_RADIUS - dist) / MAGNETIC_RADIUS;
+        setMagneticX(dx * pull * MAGNETIC_PULL);
+        setMagneticY(dy * pull * MAGNETIC_PULL);
+        isPulled = true;
+      } else if (isPulled) {
+        resetMagnetic();
+        isPulled = false;
+      }
+    }
+
+    function onMouseLeave() {
+      resetMagnetic();
+      isPulled = false;
+    }
+
+    function onClick(e: MouseEvent) {
+      e.preventDefault();
+      hasClicked = true;
+      shakeTimers.forEach((id) => window.clearTimeout(id));
+      shakeTimers.length = 0;
+      fireParticles(emitterEl);
+
+      const href = linkEl.getAttribute("href");
+      if (!href) return;
+
+      window.setTimeout(() => {
+        window.open(href, "_blank", "noopener,noreferrer");
+      }, CONFETTI_DELAY_MS);
+    }
+
+    document.addEventListener("pointermove", onMouseMove, { passive: true });
+    linkEl.addEventListener("mouseleave", onMouseLeave);
+    linkEl.addEventListener("click", onClick);
+
+    cleanup = () => {
+      shakeTimers.forEach((id) => window.clearTimeout(id));
+      clearTimeout(scrollTimeout);
+      ro.disconnect();
+      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("pointermove", onMouseMove);
+      linkEl.removeEventListener("mouseleave", onMouseLeave);
+      linkEl.removeEventListener("click", onClick);
+      gsap.killTweensOf([magneticEl, linkEl, resumeTextEl]);
+    };
+  }
+
+  document.addEventListener("astro:page-load", init);
+  document.addEventListener("astro:before-swap", () => cleanup?.());
+</script>
