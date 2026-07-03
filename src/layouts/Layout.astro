@@ -1,5 +1,6 @@
 ---
 import { ClientRouter } from "astro:transitions";
+import BackToTop from "../components/BackToTop.astro";
 import CursorBlob from "../components/CursorBlob.astro";
 import Footer from "../components/Footer.astro";
 import { OG_IMAGE, OG_LOCALE } from "../consts";
@@ -118,6 +119,29 @@ const xDefault =
         document.documentElement.style.colorScheme = theme;
       })();
     </script>
+    <script>
+      (() => {
+        try {
+          const banner = `
+███╗   ███╗ █████╗ ████████╗██╗  ██╗███████╗██╗   ██╗███████╗
+████╗ ████║██╔══██╗╚══██╔══╝██║  ██║██╔════╝██║   ██║██╔════╝
+██╔████╔██║███████║   ██║   ███████║█████╗  ██║   ██║███████╗
+██║╚██╔╝██║██╔══██║   ██║   ██╔══██║██╔══╝  ██║   ██║╚════██║
+██║ ╚═╝ ██║██║  ██║   ██║   ██║  ██║███████╗╚██████╔╝███████║
+╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚══════╝
+ ██████╗ █████╗ ██╗     ███████╗ ██████╗  █████╗ ██████╗ ██╗██╗
+██╔════╝██╔══██╗██║     ██╔════╝██╔════╝ ██╔══██╗██╔══██╗██║██║
+██║     ███████║██║     █████╗  ██║  ███╗███████║██████╔╝██║██║
+██║     ██╔══██║██║     ██╔══╝  ██║   ██║██╔══██║██╔══██╗██║╚═╝
+╚██████╗██║  ██║███████╗███████╗╚██████╔╝██║  ██║██║  ██║██║██╗
+ ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝`;
+          console.log(
+            "%c" + banner,
+            "color:#d9a441; font-family:monospace; font-weight:bold;",
+          );
+        } catch {}
+      })();
+    </script>
     <title>{title}</title>
     <ClientRouter />
     <style>
@@ -135,6 +159,7 @@ const xDefault =
         <slot />
         <Footer />
       </div>
+      <BackToTop />
     </div>
   </body>
 </html>

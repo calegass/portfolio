@@ -1,0 +1,105 @@
+---
+import ArrowUpIcon from "../assets/arrow-up.svg";
+import { getLangFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+---
+
+<button
+  type="button"
+  data-back-to-top
+  aria-label={t("scrollTop.label")}
+  class="back-to-top fixed right-6 bottom-6 z-50 inline-grid size-11 cursor-pointer place-items-center rounded-full bg-surface/80 text-muted opacity-0 backdrop-blur-sm hover:text-foreground"
+>
+  <ArrowUpIcon
+    class="back-to-top-icon"
+    width={20}
+    height={20}
+    aria-hidden="true"
+  />
+</button>
+
+<style>
+  .back-to-top {
+    translate: 0 0.5rem;
+    pointer-events: none;
+  }
+
+  .back-to-top.is-visible {
+    translate: 0 0;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .back-to-top {
+      transition:
+        opacity 300ms ease,
+        translate 300ms ease,
+        color 200ms ease;
+    }
+
+    .back-to-top-icon {
+      transition: translate 200ms ease;
+    }
+
+    .back-to-top:hover .back-to-top-icon {
+      translate: 0 -2px;
+    }
+  }
+</style>
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollSmoother } from "gsap/ScrollSmoother";
+
+  gsap.registerPlugin(ScrollSmoother);
+
+  let cleanup: (() => void) | null = null;
+
+  function init() {
+    cleanup?.();
+    cleanup = null;
+
+    const button =
+      document.querySelector<HTMLButtonElement>("[data-back-to-top]");
+    if (!button) return;
+
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    const getScrollTop = () =>
+      ScrollSmoother.get()?.scrollTop() ?? window.scrollY;
+
+    const updateVisibility = () => {
+      const threshold = window.innerHeight * 0.6;
+      button.classList.toggle("is-visible", getScrollTop() > threshold);
+    };
+
+    const onClick = () => {
+      const smoother = ScrollSmoother.get();
+      if (smoother) {
+        smoother.scrollTo(0, !prefersReduced);
+      } else {
+        window.scrollTo({
+          top: 0,
+          behavior: prefersReduced ? "auto" : "smooth",
+        });
+      }
+    };
+
+    updateVisibility();
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    button.addEventListener("click", onClick);
+
+    cleanup = () => {
+      window.removeEventListener("scroll", updateVisibility);
+      button.removeEventListener("click", onClick);
+    };
+  }
+
+  document.addEventListener("astro:page-load", init);
+  document.addEventListener("astro:before-swap", () => cleanup?.());
+</script>

@@ -17,17 +17,24 @@ const { name } = Astro.props;
   [data-hero-name] {
     overflow: visible;
     display: block;
+    white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
 </style>
 
 <script>
   import gsap from "gsap";
   import { SplitText } from "gsap/SplitText";
+  import { ScrollSmoother } from "gsap/ScrollSmoother";
 
   const RADIUS = 150;
   const STRENGTH = 14;
+  const MAX_FONT = 96;
+  const MIN_FONT = 24;
 
-  gsap.registerPlugin(SplitText);
+  gsap.registerPlugin(SplitText, ScrollSmoother);
 
   let cleanup: (() => void) | null = null;
 
@@ -37,6 +44,7 @@ const { name } = Astro.props;
 
     const nameEl = document.querySelector<HTMLElement>("[data-hero-name]");
     if (!nameEl) return;
+    const hostEl = nameEl.parentElement;
 
     const split = new SplitText(nameEl, { type: "chars" });
     const chars = split.chars as HTMLElement[];
@@ -48,6 +56,17 @@ const { name } = Astro.props;
       gsap.quickTo(ch, "y", { duration: 0.4, ease: "power3.out" }),
     );
 
+    function fitToWidth() {
+      if (!nameEl || !hostEl) return;
+      hostEl.style.fontSize = `${MAX_FONT}px`;
+      const available = nameEl.clientWidth;
+      const needed = nameEl.scrollWidth;
+      if (needed > available && needed > 0) {
+        const size = Math.max(MIN_FONT, MAX_FONT * (available / needed));
+        hostEl.style.fontSize = `${size}px`;
+      }
+    }
+
     type Rect = { cx: number; cy: number };
     let rects: Rect[] = [];
 
@@ -58,8 +77,12 @@ const { name } = Astro.props;
       });
     }
 
+    fitToWidth();
     requestAnimationFrame(cacheRects);
-    const ro = new ResizeObserver(cacheRects);
+    const ro = new ResizeObserver(() => {
+      fitToWidth();
+      cacheRects();
+    });
     ro.observe(nameEl);
 
     let scrollTimeout = 0;
@@ -69,48 +92,119 @@ const { name } = Astro.props;
     }
     window.addEventListener("scroll", onScroll, { passive: true });
 
-    const cursor = { x: -500, y: -500 };
+    function setupMagnetic(): () => void {
+      const cursor = { x: -500, y: -500 };
 
-    function onPointerMove(e: PointerEvent) {
-      cursor.x = e.clientX;
-      cursor.y = e.clientY;
+      function onPointerMove(e: PointerEvent) {
+        cursor.x = e.clientX;
+        cursor.y = e.clientY;
 
-      chars.forEach((_, i) => {
-        const { cx, cy } = rects[i] ?? { cx: 0, cy: 0 };
-        const dx = cursor.x - cx;
-        const dy = cursor.y - cy;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        chars.forEach((_, i) => {
+          const { cx, cy } = rects[i] ?? { cx: 0, cy: 0 };
+          const dx = cursor.x - cx;
+          const dy = cursor.y - cy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (dist < RADIUS && dist > 0) {
-          const force = STRENGTH * (1 - dist / RADIUS);
-          const angle = Math.atan2(dy, dx);
-          setX[i](-Math.cos(angle) * force);
-          setY[i](-Math.sin(angle) * force);
+          if (dist < RADIUS && dist > 0) {
+            const force = STRENGTH * (1 - dist / RADIUS);
+            const angle = Math.atan2(dy, dx);
+            setX[i](-Math.cos(angle) * force);
+            setY[i](-Math.sin(angle) * force);
+          } else {
+            setX[i](0);
+            setY[i](0);
+          }
+        });
+      }
+
+      function onPointerLeave() {
+        gsap.to(chars, {
+          x: 0,
+          y: 0,
+          duration: 1.2,
+          ease: "elastic.out(1, 0.4)",
+          stagger: 0.02,
+        });
+      }
+
+      document.addEventListener("pointermove", onPointerMove);
+      document.addEventListener("pointerleave", onPointerLeave);
+      document.addEventListener("pointercancel", onPointerLeave);
+
+      return () => {
+        document.removeEventListener("pointermove", onPointerMove);
+        document.removeEventListener("pointerleave", onPointerLeave);
+        document.removeEventListener("pointercancel", onPointerLeave);
+      };
+    }
+
+    function setupScrollGravity(): () => void {
+      const STRENGTH_SCROLL = 22;
+      const MAX_VELOCITY = 2500;
+      let rafId = 0;
+      let idleFrames = 0;
+      let lastY = window.scrollY;
+
+      function applyFrame() {
+        const smoother = ScrollSmoother.get();
+        let velocity: number;
+        if (smoother) {
+          velocity = smoother.getVelocity();
         } else {
-          setX[i](0);
-          setY[i](0);
+          const y = window.scrollY;
+          velocity = (y - lastY) * 60;
+          lastY = y;
         }
-      });
+
+        const norm = gsap.utils.clamp(-1, 1, velocity / MAX_VELOCITY);
+
+        chars.forEach((_, i) => {
+          const dir = i % 2 === 0 ? 1 : -1;
+          const spread = 0.4 + (i / chars.length) * 0.6;
+          setY[i](norm * STRENGTH_SCROLL * spread);
+          setX[i](norm * STRENGTH_SCROLL * 0.25 * dir * spread);
+        });
+
+        idleFrames = Math.abs(norm) < 0.01 ? idleFrames + 1 : 0;
+
+        if (idleFrames > 40) {
+          chars.forEach((_, i) => {
+            setX[i](0);
+            setY[i](0);
+          });
+          rafId = 0;
+          return;
+        }
+        rafId = requestAnimationFrame(applyFrame);
+      }
+
+      function onScrollGravity() {
+        idleFrames = 0;
+        lastY = window.scrollY;
+        if (!rafId) rafId = requestAnimationFrame(applyFrame);
+      }
+
+      window.addEventListener("scroll", onScrollGravity, { passive: true });
+
+      return () => {
+        window.removeEventListener("scroll", onScrollGravity);
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = 0;
+      };
     }
 
-    function onPointerLeave() {
-      gsap.to(chars, {
-        x: 0,
-        y: 0,
-        duration: 1.2,
-        ease: "elastic.out(1, 0.4)",
-        stagger: 0.02,
-      });
-    }
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
 
-    document.addEventListener("pointermove", onPointerMove);
-    document.addEventListener("pointerleave", onPointerLeave);
-    document.addEventListener("pointercancel", onPointerLeave);
+    let interactionCleanup: (() => void) | null = null;
+    if (!prefersReduced) {
+      interactionCleanup = coarse ? setupScrollGravity() : setupMagnetic();
+    }
 
     cleanup = () => {
-      document.removeEventListener("pointermove", onPointerMove);
-      document.removeEventListener("pointerleave", onPointerLeave);
-      document.removeEventListener("pointercancel", onPointerLeave);
+      interactionCleanup?.();
       window.removeEventListener("scroll", onScroll);
       ro.disconnect();
       split.revert();
