@@ -12,5 +12,8 @@ export default defineConfig({
   integrations: [sitemap()],
   vite: {
     plugins: [tailwindcss()],
+    server: {
+      allowedHosts: ['dev-portfolio.calegari.dev.br'],
+    },
   },
 });

@@ -5,13 +5,16 @@ interface Props {
 const { name } = Astro.props;
 ---
 
-<h1
-  id="hero-name"
-  aria-label={name}
-  class="max-w-3xl font-serif font-semibold leading-none text-foreground text-5xl sm:text-7xl md:text-8xl"
->
-  <span aria-hidden="true" data-hero-name>{name}</span>
-</h1>
+<div data-hero-stage class="relative">
+  <h1
+    id="hero-name"
+    aria-label={name}
+    class="max-w-3xl font-serif font-semibold leading-none text-foreground text-5xl sm:text-7xl md:text-8xl"
+  >
+    <span aria-hidden="true" data-hero-name>{name}</span>
+  </h1>
+  <span aria-hidden="true" data-tilt-hint hidden>Tap to drop the letters</span>
+</div>
 
 <style>
   [data-hero-name] {
@@ -22,17 +25,53 @@ const { name } = Astro.props;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
   }
+
+  [data-tilt-hint] {
+    display: none;
+  }
+
+  @media (pointer: coarse) {
+    [data-hero-stage][data-physics-active] {
+      display: flex;
+      min-height: calc(var(--hero-arena-vh, 24) * 1vh);
+      align-items: flex-start;
+      touch-action: manipulation;
+    }
+
+    [data-hero-stage][data-physics-active] > h1 {
+      width: 100%;
+    }
+
+    [data-hero-stage][data-physics-active] [data-tilt-hint] {
+      display: block;
+      position: absolute;
+      bottom: 1rem;
+      left: 0;
+      color: color-mix(in srgb, currentColor 55%, transparent);
+      font-size: 0.75rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 240ms ease;
+    }
+
+    [data-tilt-hint][data-visible="true"] {
+      opacity: 1;
+    }
+  }
 </style>
 
 <script>
   import gsap from "gsap";
   import { SplitText } from "gsap/SplitText";
   import { ScrollSmoother } from "gsap/ScrollSmoother";
+  import { setupHeroPhysics } from "../lib/heroPhysics";
 
   const RADIUS = 150;
   const STRENGTH = 14;
   const MAX_FONT = 96;
   const MIN_FONT = 24;
+
+  type Rect = { cx: number; cy: number };
 
   gsap.registerPlugin(SplitText, ScrollSmoother);
 
@@ -43,18 +82,14 @@ const { name } = Astro.props;
     cleanup = null;
 
     const nameEl = document.querySelector<HTMLElement>("[data-hero-name]");
-    if (!nameEl) return;
-    const hostEl = nameEl.parentElement;
+    const stageEl = document.querySelector<HTMLElement>("[data-hero-stage]");
+    const tiltHint = document.querySelector<HTMLElement>("[data-tilt-hint]");
+    if (!nameEl || !stageEl) return;
 
+    const stage = stageEl;
+    const hostEl = nameEl.parentElement;
     const split = new SplitText(nameEl, { type: "chars" });
     const chars = split.chars as HTMLElement[];
-
-    const setX = chars.map((ch) =>
-      gsap.quickTo(ch, "x", { duration: 0.4, ease: "power3.out" }),
-    );
-    const setY = chars.map((ch) =>
-      gsap.quickTo(ch, "y", { duration: 0.4, ease: "power3.out" }),
-    );
 
     function fitToWidth() {
       if (!nameEl || !hostEl) return;
@@ -67,32 +102,50 @@ const { name } = Astro.props;
       }
     }
 
-    type Rect = { cx: number; cy: number };
-    let rects: Rect[] = [];
-
-    function cacheRects() {
-      rects = chars.map((ch) => {
-        const r = ch.getBoundingClientRect();
-        return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
-      });
-    }
-
     fitToWidth();
-    requestAnimationFrame(cacheRects);
-    const ro = new ResizeObserver(() => {
-      fitToWidth();
-      cacheRects();
-    });
-    ro.observe(nameEl);
-
-    let scrollTimeout = 0;
-    function onScroll() {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = window.setTimeout(cacheRects, 1700);
-    }
-    window.addEventListener("scroll", onScroll, { passive: true });
 
     function setupMagnetic(): () => void {
+      const setX = chars.map((ch) =>
+        gsap.quickTo(ch, "x", { duration: 0.4, ease: "power3.out" }),
+      );
+      const setY = chars.map((ch) =>
+        gsap.quickTo(ch, "y", { duration: 0.4, ease: "power3.out" }),
+      );
+
+      let rects: Rect[] = [];
+      function cacheRects() {
+        rects = chars.map((ch) => {
+          const r = ch.getBoundingClientRect();
+          return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+        });
+      }
+      requestAnimationFrame(cacheRects);
+
+      let scrollTimeout = 0;
+      function onScroll() {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = window.setTimeout(cacheRects, 1700);
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+
+      let observedWidth = stage.clientWidth;
+      let observedHeight = stage.clientHeight;
+      const ro = new ResizeObserver(([entry]) => {
+        if (!entry) return;
+        const { width, height } = entry.contentRect;
+        if (
+          Math.abs(width - observedWidth) < 0.5 &&
+          Math.abs(height - observedHeight) < 0.5
+        ) {
+          return;
+        }
+        observedWidth = width;
+        observedHeight = height;
+        fitToWidth();
+        cacheRects();
+      });
+      ro.observe(stage);
+
       const cursor = { x: -500, y: -500 };
 
       function onPointerMove(e: PointerEvent) {
@@ -135,61 +188,8 @@ const { name } = Astro.props;
         document.removeEventListener("pointermove", onPointerMove);
         document.removeEventListener("pointerleave", onPointerLeave);
         document.removeEventListener("pointercancel", onPointerLeave);
-      };
-    }
-
-    function setupScrollGravity(): () => void {
-      const STRENGTH_SCROLL = 22;
-      const MAX_VELOCITY = 2500;
-      let rafId = 0;
-      let idleFrames = 0;
-      let lastY = window.scrollY;
-
-      function applyFrame() {
-        const smoother = ScrollSmoother.get();
-        let velocity: number;
-        if (smoother) {
-          velocity = smoother.getVelocity();
-        } else {
-          const y = window.scrollY;
-          velocity = (y - lastY) * 60;
-          lastY = y;
-        }
-
-        const norm = gsap.utils.clamp(-1, 1, velocity / MAX_VELOCITY);
-
-        chars.forEach((_, i) => {
-          const dir = i % 2 === 0 ? 1 : -1;
-          const spread = 0.4 + (i / chars.length) * 0.6;
-          setY[i](norm * STRENGTH_SCROLL * spread);
-          setX[i](norm * STRENGTH_SCROLL * 0.25 * dir * spread);
-        });
-
-        idleFrames = Math.abs(norm) < 0.01 ? idleFrames + 1 : 0;
-
-        if (idleFrames > 40) {
-          chars.forEach((_, i) => {
-            setX[i](0);
-            setY[i](0);
-          });
-          rafId = 0;
-          return;
-        }
-        rafId = requestAnimationFrame(applyFrame);
-      }
-
-      function onScrollGravity() {
-        idleFrames = 0;
-        lastY = window.scrollY;
-        if (!rafId) rafId = requestAnimationFrame(applyFrame);
-      }
-
-      window.addEventListener("scroll", onScrollGravity, { passive: true });
-
-      return () => {
-        window.removeEventListener("scroll", onScrollGravity);
-        if (rafId) cancelAnimationFrame(rafId);
-        rafId = 0;
+        window.removeEventListener("scroll", onScroll);
+        ro.disconnect();
       };
     }
 
@@ -199,14 +199,26 @@ const { name } = Astro.props;
     const coarse = window.matchMedia("(pointer: coarse)").matches;
 
     let interactionCleanup: (() => void) | null = null;
+    let disposed = false;
     if (!prefersReduced) {
-      interactionCleanup = coarse ? setupScrollGravity() : setupMagnetic();
+      if (coarse) {
+        void setupHeroPhysics({ stage, chars, tiltHint, fitToWidth }).then(
+          (physicsCleanup) => {
+            if (disposed) {
+              physicsCleanup();
+            } else {
+              interactionCleanup = physicsCleanup;
+            }
+          },
+        );
+      } else {
+        interactionCleanup = setupMagnetic();
+      }
     }
 
     cleanup = () => {
+      disposed = true;
       interactionCleanup?.();
-      window.removeEventListener("scroll", onScroll);
-      ro.disconnect();
       split.revert();
     };
   }
