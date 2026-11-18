@@ -2,6 +2,7 @@
   import { gsap } from "gsap";
   import { ScrollTrigger } from "gsap/ScrollTrigger";
   import { ScrollSmoother } from "gsap/ScrollSmoother";
+  import { TRANSLATED_EVENT } from "../lib/machineTranslation";
 
   gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
 
@@ -45,4 +46,5 @@
   }
 
   document.addEventListener("astro:page-load", init);
+  document.addEventListener(TRANSLATED_EVENT, () => ScrollTrigger.refresh());
 </script>

@@ -16,13 +16,13 @@ const { label, href: resumeHref, hint } = Astro.props;
       class="hover:text-foreground relative inline-grid cursor-pointer place-items-center font-serif font-semibold no-underline transition-colors duration-200"
       data-resume-link
     >
-      <span data-resume-text>{label}</span>
+      <span data-resume-text data-i18n="curriculum.download">{label}</span>
       <div class="emitter" data-resume-emitter aria-hidden="true"></div>
     </a>
   </div>
   <span
     class="text-muted pointer-events-none absolute left-full ml-8 max-sm:hidden -translate-x-0.75 whitespace-nowrap font-serif text-sm italic opacity-0 transition-[opacity,transform] duration-300 ease-out group-hover:translate-x-0 group-hover:opacity-70 group-focus-within:translate-x-0 group-focus-within:opacity-70 motion-reduce:transition-none"
-    >{hint}</span
+    ><span data-i18n="curriculum.hintEnglish">{hint}</span></span
   >
 </div>
 

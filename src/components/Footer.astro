@@ -16,9 +16,14 @@ const year = new Date().getFullYear();
     <div
       class="text-muted/80 flex min-w-0 flex-col gap-1 text-xs wrap-anywhere"
     >
-      <p>{t("footer.builtWith")} {TECH_STACK.join(", ")}.</p>
       <p>
-        {t("footer.inspiration")}{" "}
+        <span data-i18n="footer.builtWith">{t("footer.builtWith")}</span>{" "}
+        {TECH_STACK.join(", ")}.
+      </p>
+      <p>
+        <span data-i18n="footer.inspiration">{t("footer.inspiration")}</span>{
+          " "
+        }
         {
           INSPIRATIONS.map((credit, i) => (
             <Fragment>
@@ -35,7 +40,10 @@ const year = new Date().getFullYear();
           ))
         }.
       </p>
-      <p>&copy; {year} Matheus Calegari. {t("footer.rights")}</p>
+      <p>
+        &copy; {year} Matheus Calegari.{" "}
+        <span data-i18n="footer.rights">{t("footer.rights")}</span>
+      </p>
     </div>
 
     <div class="flex shrink-0 gap-x-6 font-semibold">

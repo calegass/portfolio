@@ -8,26 +8,28 @@
   "scripts": {
     "dev": "astro dev",
     "tunnel": "cloudflared tunnel run portfolio",
-    "dev:tunnel": "concurrently -n astro,tunnel -c blue,green \"pnpm dev\" \"pnpm tunnel\"",
+    "dev:tunnel": "concurrently -n astro,worker,tunnel -c blue,yellow,green \"pnpm dev\" \"pnpm dev:worker\" \"pnpm tunnel\"",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "check": "astro check && biome lint . && prettier . --check",
+    "check": "astro check && tsc -p worker && biome lint . && prettier . --check",
     "format": "prettier . --write",
-    "lint": "biome lint ."
+    "lint": "biome lint .",
+    "dev:worker": "astro build && wrangler dev",
+    "dev:full": "concurrently -n astro,worker -c blue,yellow \"pnpm dev\" \"pnpm dev:worker\""
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
     "@tailwindcss/vite": "^4.3.0",
     "astro": "^6.4.5",
     "gsap": "^3.15.0",
-    "planck": "1.5.0",
     "tailwindcss": "^4.3.0",
     "three": "^0.184.0"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.9",
     "@biomejs/biome": "^2.4.16",
+    "@cloudflare/workers-types": "^5.20261118.1",
     "@tailwindcss/typography": "^0.5.19",
     "@types/three": "^0.184.1",
     "concurrently": "^10.0.3",

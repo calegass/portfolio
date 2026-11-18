@@ -13,7 +13,8 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     server: {
-      allowedHosts: ['dev-portfolio.calegari.dev.br'],
+      allowedHosts: ["dev-portfolio.calegari.dev.br"],
+      proxy: { "/api": "http://127.0.0.1:8787" },
     },
   },
 });

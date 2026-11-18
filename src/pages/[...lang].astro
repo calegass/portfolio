@@ -3,12 +3,12 @@ import type { GetStaticPaths } from "astro";
 import { getEntry } from "astro:content";
 import HeroName from "../components/HeroName.astro";
 import ResumeLink from "../components/ResumeLink.astro";
-import LanguageSwitcher from "../components/LanguageSwitcher.astro";
+import LanguagePicker from "../components/LanguagePicker.astro";
 import Portfolio from "../components/Portfolio.astro";
 import ScrollAnimations from "../components/ScrollAnimations.astro";
 import ThemeToggle from "../components/ThemeToggle.astro";
 import { defaultLang, languages, showDefaultLang, type Lang } from "../i18n/ui";
-import { useTranslations } from "../i18n/utils";
+import { getLocalizedPath, useTranslations } from "../i18n/utils";
 import Layout from "../layouts/Layout.astro";
 
 export const getStaticPaths = (() => {
@@ -45,15 +45,38 @@ const resumeHref = portfolioEntry.data.resume;
         hint={t("curriculum.hint")}
       />
       <div class="flex items-center gap-10">
-        <LanguageSwitcher />
+        <LanguagePicker />
         <ThemeToggle />
       </div>
     </header>
 
     <div class="pt-24 pb-12">
       <HeroName name={t("hero.title")} />
-      <p class="text-muted mt-6 max-w-2xl font-serif text-xl sm:text-2xl">
+      <p
+        class="text-muted mt-6 max-w-2xl font-serif text-xl sm:text-2xl"
+        data-i18n="site.description"
+      >
         {t("site.description")}
+      </p>
+      <p
+        hidden
+        data-mt-notice
+        class="text-muted mt-6 font-serif text-sm italic"
+      >
+        <span data-i18n="translate.notice">{t("translate.notice")}</span>{" "}
+        <a
+          href={getLocalizedPath(defaultLang)}
+          class="hover:text-foreground underline underline-offset-2"
+          data-i18n="translate.original">{t("translate.original")}</a
+        >
+      </p>
+      <p
+        hidden
+        data-mt-error
+        role="alert"
+        class="text-muted mt-6 font-serif text-sm italic"
+      >
+        {t("translate.error")}
       </p>
     </div>
 

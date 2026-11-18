@@ -24,3 +24,8 @@ pnpm-debug.log*
 .idea/
 
 scripts/
+
+# local secrets / state
+.dev.vars*
+!.dev.vars.example
+.wrangler/

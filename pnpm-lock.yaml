@@ -20,9 +20,6 @@ importers:
       gsap:
         specifier: ^3.15.0
         version: 3.15.0
-      planck:
-        specifier: 1.5.0
-        version: 1.5.0(stage-js@1.0.2)
       tailwindcss:
         specifier: ^4.3.0
         version: 4.3.0
@@ -36,6 +33,9 @@ importers:
       '@biomejs/biome':
         specifier: ^2.4.16
         version: 2.4.16
+      '@cloudflare/workers-types':
+        specifier: ^5.20261118.1
+        version: 5.20261118.1
       '@tailwindcss/typography':
         specifier: ^0.5.19
         version: 0.5.19(tailwindcss@4.3.0)
@@ -56,7 +56,7 @@ importers:
         version: 6.0.3
       wrangler:
         specifier: ^4.100.0
-        version: 4.100.0
+        version: 4.100.0(@cloudflare/workers-types@5.20261118.1)
 
 packages:
 
@@ -228,6 +228,9 @@ packages:
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
+
+  '@cloudflare/workers-types@5.20261118.1':
+    resolution: {integrity: sha512-b1ppAa/0wrXvboTHbfyYnyYsh13OHu4ONP1h0HclZ0fEabwh2qT18YPY/z+wjyOs3o/BkyD0HCA800Ox+nju/Q==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -1818,12 +1821,6 @@ packages:
     resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
     engines: {node: '>=12'}
 
-  planck@1.5.0:
-    resolution: {integrity: sha512-dlvqJE+FscZgrGUXJ5ybd0o5bvZ5XXyZNbm08xGsXp9WjXeAyWSFT6n9s/1PQcUBo4546fDXA5RMA4wbDyZw6g==}
-    engines: {node: '>=24.0'}
-    peerDependencies:
-      stage-js: ^1.0.0-alpha.12
-
   postcss-selector-parser@6.0.10:
     resolution: {integrity: sha512-IQ7TZdoaqbT+LCpShg46jnZVlhWD2w6iQYAcYXfHARZ7X1t/UGhhceQDs5X0cGqKvYlHNOuv7Oa1xmb0oQuA3w==}
     engines: {node: '>=4'}
@@ -1978,10 +1975,6 @@ packages:
 
   space-separated-tokens@2.0.2:
     resolution: {integrity: sha512-PEGlAwrG8yXGXRjW32fGbg66JAlOAwbObuqVoJpv/mRgoWDQfgH1wDPvtzWyUSNAXBGSk8h755YDbbcEy3SH2Q==}
-
-  stage-js@1.0.2:
-    resolution: {integrity: sha512-EWTRBYlg7Qv9wGUao99/PfRe3KaiQqWmgSvTOXvaWnu1Jk/q/vV8yJVu6bi/3EqDZeMVnCPAjheba6OFc5k1GQ==}
-    engines: {node: '>=24.0'}
 
   stream-replace-string@2.0.0:
     resolution: {integrity: sha512-TlnjJ1C0QrmxRNrON00JvaFFlNh5TTG00APw23j74ET7gkQpTASi6/L2fuiav8pzK715HXtUeClpBTw2NPSn6w==}
@@ -2611,6 +2604,8 @@ snapshots:
 
   '@cloudflare/workerd-windows-64@1.20260611.1':
     optional: true
+
+  '@cloudflare/workers-types@5.20261118.1': {}
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
@@ -4253,10 +4248,6 @@ snapshots:
 
   picomatch@4.0.4: {}
 
-  planck@1.5.0(stage-js@1.0.2):
-    dependencies:
-      stage-js: 1.0.2
-
   postcss-selector-parser@6.0.10:
     dependencies:
       cssesc: 3.0.0
@@ -4500,8 +4491,6 @@ snapshots:
   source-map-js@1.2.1: {}
 
   space-separated-tokens@2.0.2: {}
-
-  stage-js@1.0.2: {}
 
   stream-replace-string@2.0.0: {}
 
@@ -4807,7 +4796,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20260611.1
       '@cloudflare/workerd-windows-64': 1.20260611.1
 
-  wrangler@4.100.0:
+  wrangler@4.100.0(@cloudflare/workers-types@5.20261118.1):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260611.1)
@@ -4818,6 +4807,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       workerd: 1.20260611.1
     optionalDependencies:
+      '@cloudflare/workers-types': 5.20261118.1
       fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil
