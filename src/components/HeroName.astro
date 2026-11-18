@@ -5,16 +5,14 @@ interface Props {
 const { name } = Astro.props;
 ---
 
-<div data-hero-stage class="relative">
-  <h1
-    id="hero-name"
-    aria-label={name}
-    class="max-w-3xl font-serif font-semibold leading-none text-foreground text-5xl sm:text-7xl md:text-8xl"
-  >
-    <span aria-hidden="true" data-hero-name>{name}</span>
-  </h1>
-  <span aria-hidden="true" data-tilt-hint hidden>Tap to drop the letters</span>
-</div>
+<h1
+  id="hero-name"
+  dir="ltr"
+  aria-label={name}
+  class="max-w-3xl font-serif font-semibold leading-none text-foreground text-5xl sm:text-7xl md:text-8xl"
+>
+  <span aria-hidden="true" data-hero-name>{name}</span>
+</h1>
 
 <style>
   [data-hero-name] {
@@ -25,46 +23,12 @@ const { name } = Astro.props;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
   }
-
-  [data-tilt-hint] {
-    display: none;
-  }
-
-  @media (pointer: coarse) {
-    [data-hero-stage][data-physics-active] {
-      display: flex;
-      min-height: calc(var(--hero-arena-vh, 24) * 1vh);
-      align-items: flex-start;
-      touch-action: manipulation;
-    }
-
-    [data-hero-stage][data-physics-active] > h1 {
-      width: 100%;
-    }
-
-    [data-hero-stage][data-physics-active] [data-tilt-hint] {
-      display: block;
-      position: absolute;
-      bottom: 1rem;
-      left: 0;
-      color: color-mix(in srgb, currentColor 55%, transparent);
-      font-size: 0.75rem;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 240ms ease;
-    }
-
-    [data-tilt-hint][data-visible="true"] {
-      opacity: 1;
-    }
-  }
 </style>
 
 <script>
   import gsap from "gsap";
   import { SplitText } from "gsap/SplitText";
-  import { ScrollSmoother } from "gsap/ScrollSmoother";
-  import { setupHeroPhysics } from "../lib/heroPhysics";
+  import { setupMobileHeroMotion } from "../lib/heroMotion";
 
   const RADIUS = 150;
   const STRENGTH = 14;
@@ -73,7 +37,7 @@ const { name } = Astro.props;
 
   type Rect = { cx: number; cy: number };
 
-  gsap.registerPlugin(SplitText, ScrollSmoother);
+  gsap.registerPlugin(SplitText);
 
   let cleanup: (() => void) | null = null;
 
@@ -81,18 +45,17 @@ const { name } = Astro.props;
     cleanup?.();
     cleanup = null;
 
-    const nameEl = document.querySelector<HTMLElement>("[data-hero-name]");
-    const stageEl = document.querySelector<HTMLElement>("[data-hero-stage]");
-    const tiltHint = document.querySelector<HTMLElement>("[data-tilt-hint]");
-    if (!nameEl || !stageEl) return;
+    const foundNameEl = document.querySelector<HTMLElement>("[data-hero-name]");
+    const foundHostEl = foundNameEl?.parentElement;
+    if (!foundNameEl || !foundHostEl) return;
 
-    const stage = stageEl;
-    const hostEl = nameEl.parentElement;
+    const nameEl: HTMLElement = foundNameEl;
+    const hostEl: HTMLElement = foundHostEl;
+
     const split = new SplitText(nameEl, { type: "chars" });
     const chars = split.chars as HTMLElement[];
 
     function fitToWidth() {
-      if (!nameEl || !hostEl) return;
       hostEl.style.fontSize = `${MAX_FONT}px`;
       const available = nameEl.clientWidth;
       const needed = nameEl.scrollWidth;
@@ -104,22 +67,45 @@ const { name } = Astro.props;
 
     fitToWidth();
 
+    let observedWidth = hostEl.clientWidth;
+    let observedHeight = hostEl.clientHeight;
+    const fitObserver = new ResizeObserver(([entry]) => {
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+      if (
+        Math.abs(width - observedWidth) < 0.5 &&
+        Math.abs(height - observedHeight) < 0.5
+      ) {
+        return;
+      }
+      observedWidth = width;
+      observedHeight = height;
+      fitToWidth();
+    });
+    fitObserver.observe(hostEl);
+
     function setupMagnetic(): () => void {
-      const setX = chars.map((ch) =>
-        gsap.quickTo(ch, "x", { duration: 0.4, ease: "power3.out" }),
+      const setX = chars.map((char) =>
+        gsap.quickTo(char, "x", { duration: 0.4, ease: "power3.out" }),
       );
-      const setY = chars.map((ch) =>
-        gsap.quickTo(ch, "y", { duration: 0.4, ease: "power3.out" }),
+      const setY = chars.map((char) =>
+        gsap.quickTo(char, "y", { duration: 0.4, ease: "power3.out" }),
       );
 
       let rects: Rect[] = [];
       function cacheRects() {
-        rects = chars.map((ch) => {
-          const r = ch.getBoundingClientRect();
-          return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+        rects = chars.map((char) => {
+          const rect = char.getBoundingClientRect();
+          return {
+            cx: rect.left + rect.width / 2,
+            cy: rect.top + rect.height / 2,
+          };
         });
       }
-      requestAnimationFrame(cacheRects);
+
+      const rectFrame = requestAnimationFrame(cacheRects);
+      const rectObserver = new ResizeObserver(cacheRects);
+      rectObserver.observe(hostEl);
 
       let scrollTimeout = 0;
       function onScroll() {
@@ -128,44 +114,21 @@ const { name } = Astro.props;
       }
       window.addEventListener("scroll", onScroll, { passive: true });
 
-      let observedWidth = stage.clientWidth;
-      let observedHeight = stage.clientHeight;
-      const ro = new ResizeObserver(([entry]) => {
-        if (!entry) return;
-        const { width, height } = entry.contentRect;
-        if (
-          Math.abs(width - observedWidth) < 0.5 &&
-          Math.abs(height - observedHeight) < 0.5
-        ) {
-          return;
-        }
-        observedWidth = width;
-        observedHeight = height;
-        fitToWidth();
-        cacheRects();
-      });
-      ro.observe(stage);
+      function onPointerMove(event: PointerEvent) {
+        chars.forEach((_, index) => {
+          const { cx, cy } = rects[index] ?? { cx: 0, cy: 0 };
+          const dx = event.clientX - cx;
+          const dy = event.clientY - cy;
+          const distance = Math.hypot(dx, dy);
 
-      const cursor = { x: -500, y: -500 };
-
-      function onPointerMove(e: PointerEvent) {
-        cursor.x = e.clientX;
-        cursor.y = e.clientY;
-
-        chars.forEach((_, i) => {
-          const { cx, cy } = rects[i] ?? { cx: 0, cy: 0 };
-          const dx = cursor.x - cx;
-          const dy = cursor.y - cy;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < RADIUS && dist > 0) {
-            const force = STRENGTH * (1 - dist / RADIUS);
+          if (distance < RADIUS && distance > 0) {
+            const force = STRENGTH * (1 - distance / RADIUS);
             const angle = Math.atan2(dy, dx);
-            setX[i](-Math.cos(angle) * force);
-            setY[i](-Math.sin(angle) * force);
+            setX[index](-Math.cos(angle) * force);
+            setY[index](-Math.sin(angle) * force);
           } else {
-            setX[i](0);
-            setY[i](0);
+            setX[index](0);
+            setY[index](0);
           }
         });
       }
@@ -185,11 +148,20 @@ const { name } = Astro.props;
       document.addEventListener("pointercancel", onPointerLeave);
 
       return () => {
+        clearTimeout(scrollTimeout);
+        cancelAnimationFrame(rectFrame);
+        rectObserver.disconnect();
+        window.removeEventListener("scroll", onScroll);
         document.removeEventListener("pointermove", onPointerMove);
         document.removeEventListener("pointerleave", onPointerLeave);
         document.removeEventListener("pointercancel", onPointerLeave);
-        window.removeEventListener("scroll", onScroll);
-        ro.disconnect();
+        setX.forEach((setter) => {
+          setter.tween.kill();
+        });
+        setY.forEach((setter) => {
+          setter.tween.kill();
+        });
+        gsap.killTweensOf(chars);
       };
     }
 
@@ -199,26 +171,16 @@ const { name } = Astro.props;
     const coarse = window.matchMedia("(pointer: coarse)").matches;
 
     let interactionCleanup: (() => void) | null = null;
-    let disposed = false;
     if (!prefersReduced) {
-      if (coarse) {
-        void setupHeroPhysics({ stage, chars, tiltHint, fitToWidth }).then(
-          (physicsCleanup) => {
-            if (disposed) {
-              physicsCleanup();
-            } else {
-              interactionCleanup = physicsCleanup;
-            }
-          },
-        );
-      } else {
-        interactionCleanup = setupMagnetic();
-      }
+      interactionCleanup = coarse
+        ? setupMobileHeroMotion({ target: nameEl, chars })
+        : setupMagnetic();
     }
 
     cleanup = () => {
-      disposed = true;
       interactionCleanup?.();
+      fitObserver.disconnect();
+      gsap.killTweensOf(chars);
       split.revert();
     };
   }
