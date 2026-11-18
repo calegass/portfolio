@@ -11,7 +11,7 @@ Uberlândia/Uberaba — MG, Brazil
 
 ## Summary
 
-> Software Engineer with experience in full-stack development and data science, working with NestJS, Angular, React, and Python. Background in computer vision, LLMs, and RAG architecture — with projects registered at the INPI (National Institute of Industrial Property) and adopted institutionally. I deliver solutions driven by measurable impact in production environments.
+> Software Engineer with experience in full-stack development, cloud, and data science, with emphasis on backend, working with TypeScript, NestJS, Angular, React, Python, and AWS. I deliver event-driven, observable production solutions with measurable impact, alongside projects in computer vision, LLMs, RAG, and geospatial engineering registered at the INPI and adopted institutionally. An open-source and technology community enthusiast, I explore DNS, WireGuard, mail servers, and OpenTelemetry through hands-on projects. I work with Agile methodologies and AI-assisted development to improve code quality, accelerate delivery, and increase engineering throughput while maintaining technical review and ownership.
 
 ---
 
@@ -21,9 +21,10 @@ Uberlândia/Uberaba — MG, Brazil
 
 **Software Engineer** | _March 2026 – Present_
 
-- Developed and delivered two complete projects from scratch, automating 5 workflows that previously relied entirely on email and manual inspection — using clean architecture, serverless functions, real-time updates, and event-driven flows.
-- Established observability and code review practices as team standards, reducing regressions and ensuring preventive maintenance of solutions in NestJS, Angular, and MariaDB.
-- Resolved critical production incidents and led improvements in the CI/CD pipeline, increasing delivery reliability.
+- Developed and delivered two greenfield products, automating **5 workflows** previously dependent on email and manual inspection through real-time updates and event-driven processing.
+- Designed NestJS, Angular, and MariaDB applications using Hexagonal Architecture, Domain-Driven Design (DDD), SOLID principles, and Clean Code practices to improve decoupling, testability, and maintainability.
+- Used AWS (Lambda, ECS, S3, EC2, and SQS), Redis for caching, Firebase Remote Config, and integrations with external services, including e-signature services.
+- Established observability with New Relic and code-review practices, handled critical production incidents, and improved CI/CD pipelines to increase delivery reliability.
 
 ---
 
@@ -31,9 +32,9 @@ Uberlândia/Uberaba — MG, Brazil
 
 **Data Scientist (Intern)** | _November 2024 – February 2026_
 
-- Trained and optimized YOLO models through hyperparameter tuning and compression techniques, achieving **98% accuracy** in the highest-frequency classes of the production dataset.
+- Trained and optimized YOLO models through hyperparameter tuning and compression techniques, achieving **98% accuracy** in the most frequent classes of the production dataset.
 - Developed unit tests that increased code coverage by **30%**, reducing the incidence of critical bugs in production.
-- Built tools to process and evaluate over **300 KPIs** using LLMs.
+- Developed and delivered **3 proofs of concept (POCs)** with Streamlit, authentication, and AI integrations, including tools to process and evaluate over **300 KPIs** and improve operational efficiency.
 
 ---
 
@@ -41,9 +42,8 @@ Uberlândia/Uberaba — MG, Brazil
 
 **Full Stack Developer (Intern)** | _April 2024 – October 2024_
 
-- Developed and implemented new front-end components with React and TypeScript, enhancing usability and user experience.
-- Identified and fixed performance bottlenecks in the front-end, back-end, and database, optimizing business logic.
-- Implemented **WAI-ARIA** and **WAI-WCAG 2.1** accessibility standards, promoting inclusion for users with disabilities.
+- Developed micro-frontends with React and TypeScript and implemented **WAI-ARIA** and **WCAG 2.1** standards, improving usability and accessibility.
+- Worked with a microservices architecture using RabbitMQ and MongoDB on GCP, identifying and resolving performance bottlenecks across the front-end, back-end, and database.
 
 ---
 
@@ -51,8 +51,8 @@ Uberlândia/Uberaba — MG, Brazil
 
 **Mobile Developer | Tech Lead** | _July 2023 – July 2025_
 
-- Led the development of a mobile application for the Public Prosecutor's Office of Minas Gerais (MPMG) and the Environmental Military Police Battalion to conduct environmental inspections, coordinating a team of 3 developers in the Flutter framework.
-- Built complete CI/CD pipelines, integrated with Firebase Distribution and GitHub Actions, for automated deployment and issue prevention with a test-driven culture.
+- Led a team of 3 developers in building a Flutter application for environmental inspections by the Public Prosecutor's Office of Minas Gerais (MPMG) and the Environmental Military Police Battalion.
+- Built CI/CD pipelines with Firebase App Distribution and GitHub Actions, automating deployments and supporting a test-driven culture.
 
 ---
 
@@ -60,27 +60,27 @@ Uberlândia/Uberaba — MG, Brazil
 
 ### Sales Analytics Dashboard — _LM Sistemas (Freelance)_ | 2025
 
-`Vite` `Tanstack Router` `Tanstack Query` `TypeScript` `ShadCN`
+`Vite` `TanStack Router` `TanStack Query` `TypeScript` `shadcn/ui`
 
-- Built a comprehensive dashboard, delivering real-time visibility of 9 operational KPIs and enabling data-driven preventive decisions — replacing dispersed manual tracking.
+- Built a comprehensive dashboard, delivering real-time visibility of **9 operational KPIs** and enabling data-driven preventive decisions — replacing dispersed manual tracking.
 - Identified and fixed inconsistencies in the C#/.NET API during integration, ensuring the integrity of the displayed data.
 
 ---
 
 ### RAG Architecture Chatbot — _IFTM_ | April 2025 – December 2025
 
-`Python` `LLMs open-source` `Qdrant` `RAG`
+`Python` `Open-Source LLMs` `Qdrant` `RAG`
 
 - Developed a chatbot for accessing admissions process information, achieving **82% Answer Correctness** and **98% Hit Rate** using exclusively open-source tools.
-- Solution adopted by the IFTM Admissions Coordination to support 30+ annual selection processes, with deployment scheduled for 2026.
+- Solution adopted by the IFTM Admissions Coordination to support more than **30 annual admissions processes**.
 
 ---
 
 ### Computer Vision Module for Termite Detection — _IFTM_ | April 2026 – December 2026
 
-`YOLO` `Python` `Drone Multiespectral`
+`YOLO` `Python` `Remote Sensing` `Multispectral Drones`
 
-- Developing a module for automated identification and quantification of termite infestations via multispectral drones, integrating multispectral image analysis with object detection.
+- Developing a module for automated identification and quantification of termite infestations from multispectral drone imagery, combining YOLO detection with spectral indices and transformations (NDVI, NDRE, NIR/R/G, RedEdge, and ExG), watershed segmentation, and other computer-vision techniques.
 
 ---
 
@@ -89,16 +89,15 @@ Uberlândia/Uberaba — MG, Brazil
 `Python` `CNN` `TensorFlow/PyTorch`
 
 - Developed an application with a CNN model for automated seed germination classification, achieving **86% accuracy** and reducing analysis time from ~30s (manual process) to **8s per batch** — an efficiency gain of **~73%**.
-- **Registered at the INPI under No. BR512024005247-0.**
 
 ---
 
 ### SIPADE Project — _IFTM_ | July 2025 – July 2026
 
-`Docker` `GitHub Actions` `Next.js` `PostgreSQL` `Express`
+`Next.js` `Leaflet` `Google Earth Engine` `PostgreSQL` `Docker`
 
-- Refactored and expanded the mobile application with ~10 new flows and 20+ revised screens, alongside delivering 10 new features.
-- Developed 2 screens in the web application (Next.js, PostgreSQL, Express) and implemented the Offline-First pattern, ensuring continuous field operation without connectivity and automatic synchronization upon reconnection.
+- Refactored and expanded the solution with ~10 new flows, more than 20 revised screens, and 10 features, implementing an **Offline-First** architecture for field operation and automatic synchronization.
+- Developed a geospatial solution with Leaflet and Google Earth Engine to identify degraded pastures, applying indices such as NDVI and MNDWI and working with map vector tiles.
 - Automated the CI/CD pipeline and containerized microservices with Docker, optimizing orchestration and deployment of georeferencing solutions.
 
 ---
@@ -107,15 +106,17 @@ Uberlândia/Uberaba — MG, Brazil
 
 ### Instituto Federal do Triângulo Mineiro — Uberaba, MG
 
-**B.S. in Computer Engineering (9th Term)** | _March 2022 – December 2026 (Expected)_
+**B.S. in Computer Engineering (10th Term)** | _March 2022 – December 2026 (Expected)_
 
-- Expected completion of all coursework by **July 2026**.
-- Teaching Assistant in Probability and Statistics (2026): probability, random variables, estimation, and hypothesis testing.
+- Completed all required coursework for the degree.
+- Teaching Assistant in Probability and Statistics (2026): probability, random variables, estimation, hypothesis testing, analysis of variance (ANOVA), and linear regression.
 
 ---
 
 ## Certifications & Awards
 
+- **Microsoft Certified: Azure Administrator Associate (AZ-104)**
+- **Microsoft Certified: Azure AI Fundamentals (AI-900)**
 - **INPI Registry No. BR512024005247-0** — Seed Germination Classification Software (2024)
 - **1st Place** — HackaGIS Health (2023)
 - **3rd Place** — IFTM Hackathon (2024)
@@ -124,13 +125,10 @@ Uberlândia/Uberaba — MG, Brazil
 
 ## Skills
 
-| Category           | Skills                                                   |
-| ------------------ | -------------------------------------------------------- |
-| **Programming**    | `TypeScript` `JavaScript` `Python` `Dart` `C#` `SQL`     |
-| **Front-end**      | `React` `Angular` `Next.js` `Tanstack`                   |
-| **Back-end**       | `NestJS` `Express` `FastAPI` `.NET`                      |
-| **Mobile**         | `Flutter`                                                |
-| **Data & AI**      | `TensorFlow` `PyTorch` `Jupyter` `YOLO`                  |
-| **Databases**      | `PostgreSQL` `MySQL/MariaDB` `MongoDB` `Qdrant`          |
-| **DevOps & Cloud** | `Docker` `Git` `GitHub Actions` `Firebase` `Azure` `AWS` |
-| **Languages**      | Portuguese (Native), English (Upper-Intermediate)        |
+| Category                     | Skills                                                                                                                                              |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Languages & Frameworks**   | `TypeScript` `JavaScript` `Python` `Dart` `C#` `Java` `Spring Boot` `SQL` `React` `Angular` `Next.js` `NestJS` `Express` `FastAPI` `.NET` `Flutter` |
+| **Cloud, DevOps & Systems**  | `AWS (Lambda, ECS, S3, EC2, SQS)` `GCP` `Azure` `Docker` `Git` `GitHub Actions` `Linux` `DNS` `WireGuard`                                           |
+| **Data, AI & Geospatial**    | `Computer Vision` `LLMs` `RAG` `YOLO` `TensorFlow` `PyTorch` `Leaflet` `Google Earth Engine` `Remote Sensing`                                       |
+| **Architecture & Platforms** | `Microservices` `Micro-frontends` `RabbitMQ` `Redis` `PostgreSQL` `MariaDB` `MongoDB` `Qdrant` `New Relic` `OpenTelemetry` `Firebase Remote Config` |
+| **Languages**                | Portuguese (Native), English (Upper-Intermediate)                                                                                                   |
