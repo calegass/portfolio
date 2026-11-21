@@ -5,7 +5,7 @@ resume: /currículo_matheus_calegari.pdf
 
 **Engenheiro de Software**  
 Uberlândia/Uberaba — MG, Brasil  
-(34) 98431-5127 | [matheuscm7@hotmail.com](mailto:matheuscm7@hotmail.com) | [LinkedIn](https://linkedin.com/in/matheus-calegari) | [GitHub](https://github.com/calegass)
+[matheuscm7@hotmail.com](mailto:matheuscm7@hotmail.com) | [LinkedIn](https://linkedin.com/in/matheus-calegari) | [GitHub](https://github.com/calegass)
 
 ---
 
