@@ -24,6 +24,12 @@
   const MAX_RENDER_LONG = 1920;
   const MAX_RENDER_SHORT = 1080;
 
+  const CLICKABLE = 'a[href], button, [role="combobox"]';
+  const ATTRACT_RADIUS = 110;
+  const FULL_ARROW_DISTANCE = 24;
+  const PULL = 0.35;
+  const EASE = 0.18;
+
   function getRenderSize() {
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -58,9 +64,16 @@
     const float EPS = 1e-4;
     const int ITR = 8;
 
+    const float ARROW_LENGTH = 0.11;
+    const float ARROW_HEAD = 0.045;
+    const float ARROW_ANGLE = 0.6;
+    const float ARROW_RADIUS = 0.011;
+
     uniform vec2 uResolution;
     uniform vec2 uPointerTrail[TRAIL_LENGTH];
     uniform vec3 uColor;
+    uniform float uMorph;
+    uniform vec2 uArrowDir;
 
     vec3 origin = vec3(0.0, 0.0, 1.0);
     vec3 cDir = vec3(0.0, 0.0, -1.0);
@@ -72,19 +85,43 @@
       return -log(h) / k;
     }
 
+    float segment(vec2 p, vec2 a, vec2 b) {
+      vec2 pa = p - a;
+      vec2 ba = b - a;
+      float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+      return length(pa - ba * h);
+    }
+
+    float arrow(vec3 p, vec2 tip, vec2 dir) {
+      vec2 normal = vec2(-dir.y, dir.x);
+      vec2 tail = tip - dir * ARROW_LENGTH;
+      vec2 barbA = tip - (dir * cos(ARROW_ANGLE) + normal * sin(ARROW_ANGLE)) * ARROW_HEAD;
+      vec2 barbB = tip - (dir * cos(ARROW_ANGLE) - normal * sin(ARROW_ANGLE)) * ARROW_HEAD;
+      float d = min(
+        segment(p.xy, tail, tip),
+        min(segment(p.xy, tip, barbA), segment(p.xy, tip, barbB))
+      );
+      return length(vec2(d, p.z)) - ARROW_RADIUS;
+    }
+
+    vec2 toScene(vec2 point) {
+      return point * uResolution / min(uResolution.x, uResolution.y);
+    }
+
     float map(vec3 p) {
       float baseRadius = 4e-3;
       float radius = baseRadius * float(TRAIL_LENGTH);
       float k = 25.0;
-      float d = 1e5;
+      float blob = 1e5;
 
       for (int i = 0; i < TRAIL_LENGTH; i++) {
-        vec2 pt = uPointerTrail[i] * uResolution / min(uResolution.x, uResolution.y);
+        vec2 pt = toScene(uPointerTrail[i]);
         float sphere = length(p - vec3(pt, 0.0)) - (radius - baseRadius * float(i));
-        d = smoothMin(d, sphere, k);
+        blob = smoothMin(blob, sphere, k);
       }
 
-      return d;
+      if (uMorph < 0.001) return blob;
+      return mix(blob, arrow(p, toScene(uPointerTrail[0]), uArrowDir), uMorph);
     }
 
     void main() {
@@ -110,7 +147,11 @@
   let camera: any = null;
   let uniforms: any = null;
   let trail: any[] = [];
-  let cursor: any = null;
+
+  const pointer = { x: -1e4, y: -1e4 };
+  const pull = { x: 0, y: 0 };
+  const arrowDir = { x: 1, y: 0 };
+  let morph = 0;
 
   let visible = false;
   let rafId = 0;
@@ -119,20 +160,89 @@
   let initialized = false;
   let cleanup: (() => void) | null = null;
 
+  function nearestClickable() {
+    let best: { x: number; y: number; distance: number } | null = null;
+    for (const el of document.querySelectorAll<HTMLElement>(CLICKABLE)) {
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) continue;
+      const x = Math.min(Math.max(pointer.x, rect.left), rect.right);
+      const y = Math.min(Math.max(pointer.y, rect.top), rect.bottom);
+      const distance = Math.hypot(x - pointer.x, y - pointer.y);
+      if (distance < ATTRACT_RADIUS && (!best || distance < best.distance)) {
+        best = { x, y, distance };
+      }
+    }
+    return best;
+  }
+
+  // The closer the pointer gets to a clickable, the more the blob leans into
+  // it and turns into an arrow. The real cursor is never moved.
+  function updateAttraction(): boolean {
+    const target = nearestClickable();
+    const s = target
+      ? Math.min(
+          1,
+          1 -
+            (target.distance - FULL_ARROW_DISTANCE) /
+              (ATTRACT_RADIUS - FULL_ARROW_DISTANCE),
+        )
+      : 0;
+    const goal = s * s * (3 - 2 * s);
+
+    morph += (goal - morph) * EASE;
+    const pullX = target ? (target.x - pointer.x) * PULL * goal : 0;
+    const pullY = target ? (target.y - pointer.y) * PULL * goal : 0;
+    pull.x += (pullX - pull.x) * EASE;
+    pull.y += (pullY - pull.y) * EASE;
+
+    if (target && target.distance > 1) {
+      const dx = (target.x - pointer.x) / target.distance;
+      const dy = -(target.y - pointer.y) / target.distance;
+      arrowDir.x += (dx - arrowDir.x) * EASE;
+      arrowDir.y += (dy - arrowDir.y) * EASE;
+      const length = Math.hypot(arrowDir.x, arrowDir.y) || 1;
+      arrowDir.x /= length;
+      arrowDir.y /= length;
+    }
+
+    uniforms.uMorph.value = morph;
+    uniforms.uArrowDir.value.set(arrowDir.x, arrowDir.y);
+
+    return (
+      Math.abs(goal - morph) > 0.002 ||
+      Math.abs(pullX - pull.x) > 0.2 ||
+      Math.abs(pullY - pull.y) > 0.2
+    );
+  }
+
+  function headPosition() {
+    return {
+      x: ((pointer.x + pull.x) / window.innerWidth) * 2 - 1,
+      y: -((pointer.y + pull.y) / window.innerHeight) * 2 + 1,
+    };
+  }
+
   function updateTrail() {
     for (let i = TRAIL_LENGTH - 1; i > 0; i--) trail[i].copy(trail[i - 1]);
-    trail[0].copy(cursor);
+    const head = headPosition();
+    trail[0].set(head.x, head.y);
   }
 
   function render() {
+    const settling = updateAttraction();
     updateTrail();
     renderer.render(scene, camera);
-    if (settleFrames > 0) {
-      settleFrames--;
+    if (settleFrames > 0 || settling) {
+      settleFrames = Math.max(0, settleFrames - 1);
       rafId = requestAnimationFrame(render);
     } else {
       rafId = 0;
     }
+  }
+
+  function wake() {
+    settleFrames = TRAIL_LENGTH + 4;
+    if (visible && !rafId) render();
   }
 
   function onPointerLeave() {
@@ -146,18 +256,17 @@
   }
 
   function onPointerMove(e: PointerEvent) {
-    const x = (e.clientX / window.innerWidth) * 2 - 1;
-    const y = -(e.clientY / window.innerHeight) * 2 + 1;
-    cursor.set(x, y);
-    settleFrames = TRAIL_LENGTH + 4;
+    pointer.x = e.clientX;
+    pointer.y = e.clientY;
 
     if (!visible) {
       clearTimeout(leaveTimeout);
-      trail.forEach((v) => v.set(x, y));
+      const head = headPosition();
+      trail.forEach((v) => v.set(head.x, head.y));
       canvas.style.opacity = "1";
       visible = true;
     }
-    if (!rafId) render();
+    wake();
   }
 
   async function init() {
@@ -179,7 +288,6 @@
       { length: TRAIL_LENGTH },
       () => new THREE.Vector2(-10, -10),
     );
-    cursor = new THREE.Vector2(-10, -10);
 
     function getBlobColor() {
       return document.documentElement.dataset.theme === "dark"
@@ -193,6 +301,8 @@
       },
       uPointerTrail: { value: trail },
       uColor: { value: getBlobColor() },
+      uMorph: { value: 0 },
+      uArrowDir: { value: new THREE.Vector2(1, 0) },
     };
 
     const geometry = new THREE.PlaneGeometry(2, 2);
@@ -223,12 +333,14 @@
       uniforms.uResolution.value.set(width, height);
     }
     window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", wake, { passive: true });
 
     cleanup = () => {
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerleave", onPointerLeave);
       document.removeEventListener("pointercancel", onPointerLeave);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", wake);
       themeObserver.disconnect();
       geometry.dispose();
       material.dispose();
@@ -253,6 +365,8 @@
     cleanup?.();
     cleanup = null;
     visible = false;
+    morph = 0;
+    pull.x = pull.y = 0;
   }
 
   function registerPointerListener() {
